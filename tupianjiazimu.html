@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片字幕生成器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .left-section {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .right-section {
+            display: flex;
+            flex-direction: column;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+            grid-column: 1 / -1;
+        }
+
+        .file-select {
+            margin-bottom: 20px;
+        }
+
+        .file-select label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        #file-name {
+            display: inline-block;
+            margin-left: 10px;
+            color: #666;
+        }
+
+        .style-config {
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .config-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .config-item label {
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .config-item input[type="number"] {
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .config-item input[type="color"] {
+            height: 35px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .subtitle-input {
+            margin-bottom: 20px;
+        }
+
+        .subtitle-input label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        #subtitle-text {
+            width: 100%;
+            height: 120px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            resize: vertical;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+        }
+
+        .buttons {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        #generate-btn {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        #save-btn {
+            background-color: #2196F3;
+            color: white;
+        }
+
+        #generate-btn:hover {
+            background-color: #45a049;
+        }
+
+        #save-btn:hover {
+            background-color: #0b7dda;
+        }
+
+        .preview-area {
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+
+        .preview-area label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        #image-preview {
+            width: 100%;
+            max-height: calc(100vh - 150px);
+            object-fit: contain;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #fafafa;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .style-config {
+                grid-template-columns: 1fr;
+            }
+
+            .buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>图片字幕生成器</h1>
+
+        <!-- 左侧功能区 -->
+        <div class="left-section">
+            <!-- 文件选择 -->
+            <div class="file-select">
+                <label for="image-file">选择文件:</label>
+                <input type="file" id="image-file" accept="image/*" style="display: none;">
+                <button type="button" id="file-select-btn">浏览文件</button>
+                <span id="file-name">未选择文件</span>
+            </div>
+
+            <!-- 字幕样式配置 -->
+            <div class="style-config">
+                <div class="config-item">
+                    <label for="subtitle-height">字幕高度(px):</label>
+                    <input type="number" id="subtitle-height" value="40" min="10" max="100">
+                </div>
+                <div class="config-item">
+                    <label for="font-size">字体大小(px):</label>
+                    <input type="number" id="font-size" value="20" min="8" max="50">
+                </div>
+                <div class="config-item">
+                    <label for="font-color">字体颜色:</label>
+                    <input type="color" id="font-color" value="#ffffff">
+                </div>
+                <div class="config-item">
+                    <label for="outline-color">轮廓颜色:</label>
+                    <input type="color" id="outline-color" value="#000000">
+                </div>
+            </div>
+
+            <!-- 字幕文本输入 -->
+            <div class="subtitle-input">
+                <label for="subtitle-text">字幕内容:</label>
+                <textarea id="subtitle-text" placeholder="请输入字幕内容，支持多行输入...">你好</textarea>
+            </div>
+
+            <!-- 操作按钮 -->
+            <div class="buttons">
+                <button id="generate-btn">生成字幕图片</button>
+                <button id="save-btn" disabled>保存图片</button>
+            </div>
+        </div>
+
+        <!-- 右侧预览区 -->
+        <div class="right-section">
+            <!-- 图片预览 -->
+            <div class="preview-area">
+                <label>预览:</label>
+                <img id="image-preview" src="" alt="预览图片">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 获取DOM元素
+        const fileSelectBtn = document.getElementById('file-select-btn');
+        const imageFileInput = document.getElementById('image-file');
+        const fileNameDisplay = document.getElementById('file-name');
+        const subtitleHeightInput = document.getElementById('subtitle-height');
+        const fontSizeInput = document.getElementById('font-size');
+        const fontColorInput = document.getElementById('font-color');
+        const outlineColorInput = document.getElementById('outline-color');
+        const subtitleTextArea = document.getElementById('subtitle-text');
+        const generateBtn = document.getElementById('generate-btn');
+        const saveBtn = document.getElementById('save-btn');
+        const imagePreview = document.getElementById('image-preview');
+
+        let originalImage = null;
+        let generatedImage = null;
+
+        // 文件选择按钮点击事件
+        fileSelectBtn.addEventListener('click', () => {
+            imageFileInput.click();
+        });
+
+        // 图片文件选择事件
+        imageFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                fileNameDisplay.textContent = file.name;
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    originalImage = new Image();
+                    originalImage.onload = () => {
+                        imagePreview.src = event.target.result;
+                    };
+                    originalImage.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // 生成字幕图片
+        generateBtn.addEventListener('click', () => {
+            if (!originalImage) {
+                alert('请先选择图片文件');
+                return;
+            }
+
+            const subtitleHeight = parseInt(subtitleHeightInput.value);
+            const fontSize = parseInt(fontSizeInput.value);
+            const fontColor = fontColorInput.value;
+            const outlineColor = outlineColorInput.value;
+            const subtitleText = subtitleTextArea.value;
+
+            if (!subtitleText.trim()) {
+                alert('请输入字幕内容');
+                return;
+            }
+
+            // 创建Canvas
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+
+            // 设置Canvas尺寸
+            const lines = subtitleText.split('\n').filter(line => line.trim() !== '');
+            const canvasHeight = originalImage.height + (lines.length * subtitleHeight);
+            canvas.width = originalImage.width;
+            canvas.height = canvasHeight;
+
+            // 绘制原图
+            ctx.drawImage(originalImage, 0, 0);
+
+            // 绘制字幕
+            const backgroundHeight = subtitleHeight;
+
+            // 截取原图底部100px作为背景模板
+            const bottomSectionHeight = 100;
+            const bottomSectionY = Math.max(0, originalImage.height - bottomSectionHeight);
+            
+            // 为每个字幕行绘制背景和文字
+            lines.forEach((line, index) => {
+                const yPosition = originalImage.height + (index * backgroundHeight);
+                
+                // 重复绘制原图底部部分作为背景
+                for (let y = 0; y < backgroundHeight; y++) {
+                    const sourceY = bottomSectionY + (y % bottomSectionHeight);
+                    ctx.drawImage(
+                        originalImage, 
+                        0, sourceY, canvas.width, 1, 
+                        0, yPosition + y, canvas.width, 1
+                    );
+                }
+
+                // 覆盖半透明阴影
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+                ctx.fillRect(0, yPosition, canvas.width, backgroundHeight);
+
+                // 设置字体样式
+                ctx.font = `${fontSize}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle'; // 设置文本基线为中间
+
+                // 绘制文字轮廓
+                ctx.strokeStyle = outlineColor;
+                ctx.lineWidth = 3;
+                ctx.strokeText(line, canvas.width / 2, yPosition + backgroundHeight / 2);
+
+                // 绘制文字
+                ctx.fillStyle = fontColor;
+                ctx.fillText(line, canvas.width / 2, yPosition + backgroundHeight / 2);
+            });
+            
+            // 不需要清理临时canvas，因为没有创建
+
+            // 显示生成的图片
+            generatedImage = canvas.toDataURL('image/png');
+            imagePreview.src = generatedImage;
+
+            // 启用保存按钮
+            saveBtn.disabled = false;
+        });
+
+        // 保存图片
+        saveBtn.addEventListener('click', () => {
+            if (!generatedImage) {
+                alert('请先生成字幕图片');
+                return;
+            }
+
+            // 创建下载链接
+            const link = document.createElement('a');
+            link.download = 'subtitle-image.png';
+            link.href = generatedImage;
+            link.click();
+        });
+    </script>
+</body>
+</html>
